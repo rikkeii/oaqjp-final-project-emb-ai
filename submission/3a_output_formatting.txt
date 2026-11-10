@@ -1,0 +1,29 @@
+"""Emotion detection application built on the Watson NLP EmotionPredict function."""
+
+import json
+
+import requests
+
+URL = (
+    "https://sn-watson-emotion.labs.skills.network/v1/"
+    "watson.runtime.nlp.v1/NlpService/EmotionPredict"
+)
+HEADERS = {"grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"}
+EMOTIONS = ("anger", "disgust", "fear", "joy", "sadness")
+
+
+def emotion_detector(text_to_analyze):
+    """Analyze the emotions in a text.
+
+    Returns a dictionary with the scores for anger, disgust, fear, joy and sadness,
+    plus 'dominant_emotion', the name of the emotion with the highest score.
+    """
+    payload = {"raw_document": {"text": text_to_analyze}}
+    response = requests.post(URL, json=payload, headers=HEADERS, timeout=30)
+
+    response_dict = json.loads(response.text)
+    scores = response_dict["emotionPredictions"][0]["emotion"]
+
+    result = {emotion: scores[emotion] for emotion in EMOTIONS}
+    result["dominant_emotion"] = max(EMOTIONS, key=lambda emotion: result[emotion])
+    return result
